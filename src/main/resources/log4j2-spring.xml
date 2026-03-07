@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <Property name="LOG_PATTERN">trace_id: %X{trace_id} | span_id: %X{span_id} | %d{dd-MM-yyyy HH:mm:ss.SSS}{GMT+7}
+            [%t] %-5level %logger{36} - %msg%n
+        </Property>
+        <Property name="LOG_PATH">${env:LOG_FILE_PATH:-./logs}</Property>
+        <Property name="LOG_SIZE">${env:LOG_FILE_SIZE:-50MB}</Property>
+        <Property name="LOG_ROLLOVER">${env:LOG_ROLLOVER_COUNT:-10}</Property>
+        <Property name="APP_NAME">${spring:spring.application.name:-remind-pack-users-svc}</Property>
+        <Property name="UUID">${spring:random.uuid}</Property>
+
+    </Properties>
+
+    <Appenders>
+        <!-- Console Appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <!-- Main Application Rolling File -->
+        <RollingFile name="AppFile"
+                     fileName="${LOG_PATH}/${APP_NAME}.log"
+                     filePattern="${LOG_PATH}/${APP_NAME}-%d{yyyy-MM-dd}-%i.log.gz"
+                     immediateFlush="false"
+                     bufferedIO="true"
+                     bufferSize="16384">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="${LOG_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_ROLLOVER}">
+                <Delete basePath="${LOG_PATH}" maxDepth="2">
+                    <IfFileName glob="${APP_NAME}*.log.gz"/>
+                    <IfLastModified age="30d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- Hibernate-specific Rolling File -->
+        <RollingFile name="HibernateFile"
+                     fileName="${LOG_PATH}/${APP_NAME}-hibernate.log"
+                     filePattern="${LOG_PATH}/${APP_NAME}-hibernate-%d{yyyy-MM-dd}-%i.log.gz"
+                     immediateFlush="false"
+                     bufferedIO="true"
+                     bufferSize="8192">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="${LOG_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_ROLLOVER}">
+                <Delete basePath="${LOG_PATH}" maxDepth="2">
+                    <IfFileName glob="${APP_NAME}-hibernate*.log.gz"/>
+                    <IfLastModified age="30d"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- Application loggers - to main file -->
+        <Logger name="com.manadoksli" level="debug" additivity="false">
+            <AppenderRef ref="AppFile"/>
+        </Logger>
+
+        <Logger name="com.manadoksli.controller" level="debug" additivity="false">
+            <AppenderRef ref="AppFile"/>
+        </Logger>
+
+        <Logger name="com.manadoksli.controller.GlobalControllerAdvice" level="debug" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AppFile"/>
+        </Logger>
+
+        <Logger name="com.manadoksli.service" level="debug" additivity="false">
+            <AppenderRef ref="AppFile"/>
+        </Logger>
+
+        <!-- Hibernate loggers - to separate hibernate file -->
+        <Logger name="org.hibernate" level="info" additivity="false">
+            <AppenderRef ref="HibernateFile"/>
+        </Logger>
+
+        <Logger name="org.hibernate.SQL" level="info" additivity="false">
+            <AppenderRef ref="HibernateFile"/>
+        </Logger>
+
+        <Logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="info" additivity="false">
+            <AppenderRef ref="HibernateFile"/>
+        </Logger>
+
+        <Logger name="org.hibernate.type.descriptor.sql.BasicExtractor" level="info" additivity="false">
+            <AppenderRef ref="HibernateFile"/>
+        </Logger>
+
+        <!-- Spring Boot loggers - console and main file -->
+        <Logger name="org.springframework.boot" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AppFile"/>
+        </Logger>
+
+        <!-- Root logger - console and main file -->
+        <Root level="error">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AppFile"/>
+        </Root>
+    </Loggers>
+</Configuration>
