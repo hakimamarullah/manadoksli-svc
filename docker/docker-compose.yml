@@ -23,7 +23,9 @@ services:
     env_file:
       - .env.local
     environment:
-      - JAVA_OPTS=-Dspring.profiles.active=local
+      - JAVA_OPTS=-Dspring.profiles.active=local -Dmanagement.health.rabbit.enabled=false
+      - JAVA_ARGS=--management.health.rabbit.enabled=false
+      - MANAGEMENT_HEALTH_RABBIT_ENABLED=false
     networks:
       - manadoksli-network
 

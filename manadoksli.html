@@ -848,7 +848,7 @@
       setTimeout(() => {
         prog.classList.remove('show'); fill.style.width = '0%';
         btn.disabled = false; lbl.textContent = t('uploadBtn');
-        if (res.status === 409)  toast(t('similarExists'), 'info');
+        if (res.status === 409)  toast(data.message ?? t('similarExists'), 'info');
         else if (res.ok)         { toast(t('indexedOk'), 'success'); clearFile(); closeUpload(); }
         else                     toast(data.message || t('uploadFail'), 'error');
       }, 350);

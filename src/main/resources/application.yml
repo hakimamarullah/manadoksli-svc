@@ -29,7 +29,10 @@ ocr:
   api-key: ${OCR_API_KEY}
   url: https://api.ocr.space/parse/image
 
-
 logging:
   level:
     com.manadoksli.service.impl.OcrSvc: INFO
+management:
+  health:
+    rabbit:
+      enabled: ${MANAGEMENT_HEALTH_RABBIT_ENABLED:false}
