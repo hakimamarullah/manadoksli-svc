@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -30,14 +29,13 @@ public class ReportSvc implements IReportService {
 
     @Override
     public ApiResponse<Void> report(ReportReq req) {
-        // Check image exists
-        Optional<ImageDocument> imageOpt = imageRepository.findById(req.getImageId());
+        var imageOpt = imageRepository.findById(req.getImageId());
         if (imageOpt.isEmpty()) {
             return ApiResponse.setResponse(null, "Image not found", 404);
         }
 
-        // Save report — return immediately to user
-        ReportDocument report = ReportDocument.builder()
+
+        var report = ReportDocument.builder()
                 .id(UUID.randomUUID().toString())
                 .imageId(req.getImageId())
                 .reason(req.getReason())
@@ -47,10 +45,10 @@ public class ReportSvc implements IReportService {
         reportRepository.save(report);
         log.info("Image {} reported for: {}", req.getImageId(), req.getReason());
 
-        // Process deletion asynchronously — user doesn't wait for this
+
         CompletableFuture.runAsync(() -> processReportAsync(req.getImageId(), imageOpt.get()));
 
-        return ApiResponse.setSuccess(null);
+        return ApiResponse.setDefaultSuccess();
     }
 
 

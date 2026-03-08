@@ -8,6 +8,8 @@ import com.manadoksli.dto.ApiResponse;
 import com.manadoksli.dto.PagedResult;
 import com.manadoksli.dto.SearchReq;
 import com.manadoksli.dto.SearchResult;
+import com.manadoksli.exceptions.ApiBadRequestException;
+import com.manadoksli.exceptions.ApiResourceConflictException;
 import com.manadoksli.model.ImageDocument;
 import com.manadoksli.repository.ImageDocumentRepository;
 import com.manadoksli.service.IImageService;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -48,15 +51,15 @@ public class ImageSvc implements IImageService {
 
     @Transactional
     @Override
-    public ApiResponse<String> upload(MultipartFile file) {
+    public ApiResponse<String> upload(MultipartFile file) throws IOException {
         var extractedText = ocrService.extractText(file);
 
         if (extractedText.isBlank()) {
-            return ApiResponse.setResponse(null, "No text could be extracted from the image", 400);
+            throw new ApiBadRequestException("error.no-text-extracted");
         }
 
         if (isDuplicate(extractedText)) {
-            return ApiResponse.setResponse(null, "Similar image already exists", 409);
+            throw new ApiResourceConflictException("error.similar-image-exists");
         }
 
         var imageUrl = storageService.upload(file);
@@ -74,59 +77,56 @@ public class ImageSvc implements IImageService {
 
 
     @Override
-    public ApiResponse<PagedResult<SearchResult>> search(SearchReq req) {
-        try {
-            var hasQuery = req.getQuery() != null && !req.getQuery().isBlank();
+    public ApiResponse<PagedResult<SearchResult>> search(SearchReq req) throws IOException {
 
-            // Build sort options
-            var sorts = new ArrayList<SortOptions>();
-            if (hasQuery) {
-                sorts.add(SortOptions.of(so -> so.score(sc -> sc.order(SortOrder.Desc))));
-            }
-            sorts.add(SortOptions.of(so -> so
-                    .field(f -> f.field("uploadedAt").order(SortOrder.Desc))
-            ));
+        var hasQuery = req.getQuery() != null && !req.getQuery().isBlank();
 
-            var response = elasticsearchClient.search(s -> s
-                            .index(ImageDocument.IMAGES)
-                            .query(q -> hasQuery
-                                    ? q.multiMatch(m -> m.query(req.getQuery()).fields("text"))
-                                    : q.matchAll(m -> m)
-                            )
-                            .sort(sorts)
-                            .from(req.getPage() * req.getSize())
-                            .size(req.getSize()),
-                    ImageDocument.class
-            );
-
-            long totalElements = response.hits().total() != null
-                    ? response.hits().total().value() : 0L;
-            int totalPages = (int) Math.ceil((double) totalElements / req.getSize());
-
-            var results = response.hits().hits().stream()
-                    .map(Hit::source)
-                    .filter(Objects::nonNull)
-                    .map(doc -> SearchResult.builder()
-                            .id(doc.getId())
-                            .text(doc.getText())
-                            .imageUrl(doc.getImageUrl())
-                            .uploadedAt(doc.getUploadedAt())
-                            .build()
-                    )
-                    .toList();
-
-            return ApiResponse.setSuccess(PagedResult.<SearchResult>builder()
-                    .contents(results)
-                    .totalElements(totalElements)
-                    .totalPages(totalPages)
-                    .currentPage(req.getPage())
-                    .size(req.getSize())
-                    .build());
-
-        } catch (Exception e) {
-            log.error("Search failed: {}", e.getMessage(), e);
-            return ApiResponse.setResponse(null, "Search failed", 500);
+        // Build sort options
+        var sorts = new ArrayList<SortOptions>();
+        if (hasQuery) {
+            sorts.add(SortOptions.of(so -> so.score(sc -> sc.order(SortOrder.Desc))));
         }
+        sorts.add(SortOptions.of(so -> so
+                .field(f -> f.field("uploadedAt").order(SortOrder.Desc))
+        ));
+
+        var response = elasticsearchClient.search(s -> s
+                        .index(ImageDocument.IMAGES)
+                        .query(q -> hasQuery
+                                ? q.multiMatch(m -> m.query(req.getQuery()).fields("text"))
+                                : q.matchAll(m -> m)
+                        )
+                        .sort(sorts)
+                        .from(req.getPage() * req.getSize())
+                        .size(req.getSize()),
+                ImageDocument.class
+        );
+
+        long totalElements = response.hits().total() != null
+                ? response.hits().total().value() : 0L;
+        int totalPages = (int) Math.ceil((double) totalElements / req.getSize());
+
+        var results = response.hits().hits().stream()
+                .map(Hit::source)
+                .filter(Objects::nonNull)
+                .map(doc -> SearchResult.builder()
+                        .id(doc.getId())
+                        .text(doc.getText())
+                        .imageUrl(doc.getImageUrl())
+                        .uploadedAt(doc.getUploadedAt())
+                        .build()
+                )
+                .toList();
+
+        return ApiResponse.setSuccess(PagedResult.<SearchResult>builder()
+                .contents(results)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .currentPage(req.getPage())
+                .size(req.getSize())
+                .build());
+
+
     }
 
     private boolean isDuplicate(String text) {

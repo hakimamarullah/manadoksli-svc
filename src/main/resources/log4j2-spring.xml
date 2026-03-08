@@ -7,7 +7,7 @@
         <Property name="LOG_PATH">${env:LOG_FILE_PATH:-./logs}</Property>
         <Property name="LOG_SIZE">${env:LOG_FILE_SIZE:-50MB}</Property>
         <Property name="LOG_ROLLOVER">${env:LOG_ROLLOVER_COUNT:-10}</Property>
-        <Property name="APP_NAME">${spring:spring.application.name:-remind-pack-users-svc}</Property>
+        <Property name="APP_NAME">${env:SPRING_APPLICATION_NAME:-remind-pack-users-svc}</Property>
         <Property name="UUID">${spring:random.uuid}</Property>
 
     </Properties>
@@ -63,19 +63,22 @@
         <!-- Application loggers - to main file -->
         <Logger name="com.manadoksli" level="debug" additivity="false">
             <AppenderRef ref="AppFile"/>
+            <AppenderRef ref="Console"/>
         </Logger>
 
         <Logger name="com.manadoksli.controller" level="debug" additivity="false">
             <AppenderRef ref="AppFile"/>
+            <AppenderRef ref="Console"/>
         </Logger>
 
-        <Logger name="com.manadoksli.controller.GlobalControllerAdvice" level="debug" additivity="false">
+        <Logger name="com.manadoksli.controller.error.GlobalControllerAdvice" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="AppFile"/>
         </Logger>
 
         <Logger name="com.manadoksli.service" level="debug" additivity="false">
             <AppenderRef ref="AppFile"/>
+            <AppenderRef ref="Console"/>
         </Logger>
 
         <!-- Hibernate loggers - to separate hibernate file -->
@@ -102,7 +105,7 @@
         </Logger>
 
         <!-- Root logger - console and main file -->
-        <Root level="error">
+        <Root level="info">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="AppFile"/>
         </Root>

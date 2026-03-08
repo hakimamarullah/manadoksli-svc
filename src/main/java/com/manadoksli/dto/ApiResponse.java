@@ -3,6 +3,7 @@ package com.manadoksli.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.manadoksli.controller.error.FieldErrorVM;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Data
@@ -27,9 +30,13 @@ public class ApiResponse<T> implements Serializable {
     @Serial
     private static final long serialVersionUID = -661399947346496786L;
 
-    @JsonIgnore
+
     @Builder.Default
     private Integer code = 200;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Builder.Default
+    private List<FieldErrorVM> fieldErrors = new ArrayList<>();
 
 
     private String message;
