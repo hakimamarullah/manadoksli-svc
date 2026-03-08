@@ -1,0 +1,31 @@
+services:
+  schoolers-svc:
+    image: hakimamarullah/manadoksli-svc:latest
+    pull_policy: always
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 20
+        window: 120s
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/opt/app/logs
+      - ./uploads:/opt/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 3s
+      timeout: 10s
+      retries: 20
+    environment:
+      - JAVA_OPTS=-Dspring.profiles.active=local
+      - LOG_FILE_PATH=/opt/app/logs
+      - SPRING_CLOUD_CONFIG_URI=http://host.docker.internal:9090
+      - SPRING_APPLICATION_NAME=manadoksli-svc
+    networks:
+      - manadoksli-network
+
+networks:
+  manadoksli-network:
+    driver: bridge
