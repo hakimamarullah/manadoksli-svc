@@ -18,6 +18,8 @@
             <PatternLayout pattern="${LOG_PATTERN}"/>
         </Console>
 
+        <OpenTelemetry name="OpenTelemetryAppender"/>
+
         <!-- Main Application Rolling File -->
         <RollingFile name="AppFile"
                      fileName="${LOG_PATH}/${APP_NAME}.log"
@@ -108,6 +110,7 @@
         <Root level="info">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="AppFile"/>
+            <AppenderRef ref="OpenTelemetryAppender" level="trace"/>
         </Root>
     </Loggers>
 </Configuration>

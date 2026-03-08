@@ -32,7 +32,27 @@ ocr:
 logging:
   level:
     com.manadoksli.service.impl.OcrSvc: INFO
+
 management:
+  opentelemetry:
+    resource-attributes:
+      service.name: manadoksli-svc
   health:
     rabbit:
       enabled: ${MANAGEMENT_HEALTH_RABBIT_ENABLED:false}
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  tracing:
+    export:
+      otlp:
+        enabled: false
+    baggage:
+      correlation:
+        enabled: true
+    sampling:
+      probability: 1.0
+    propagation:
+      consume: W3C, B3, B3_MULTI
+      produce: W3C

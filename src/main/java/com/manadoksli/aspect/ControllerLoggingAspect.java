@@ -1,6 +1,8 @@
 package com.manadoksli.aspect;
 
 
+import io.micrometer.tracing.TraceContext;
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,8 @@ public class ControllerLoggingAspect {
 
     @Qualifier("loggingMapper")
     private final JsonMapper mapper;
+
+    private final Tracer tracer;
 
 
     @Pointcut("execution(@com.manadoksli.aspect.annotation.LogRequestResponse * *(..))")
@@ -179,11 +183,10 @@ public class ControllerLoggingAspect {
 
 
     private String getTraceId() {
-        try {
-            return UUID.randomUUID().toString();
-        } catch (Exception e) {
-            return "";
-        }
+        TraceContext context = this.tracer.currentTraceContext().context();
+        return Optional.ofNullable(context)
+                .map(TraceContext::traceId)
+                .orElse(UUID.randomUUID().toString());
     }
 
 
