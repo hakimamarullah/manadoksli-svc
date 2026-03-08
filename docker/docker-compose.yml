@@ -1,5 +1,7 @@
+name: Manadoksli Universe
+
 services:
-  schoolers-svc:
+  manadoksli-svc:
     image: hakimamarullah/manadoksli-svc:latest
     pull_policy: always
     deploy:
@@ -9,7 +11,7 @@ services:
         max_attempts: 20
         window: 120s
     ports:
-      - "8080:8080"
+      - "9898:8080"
     volumes:
       - ./logs:/opt/app/logs
       - ./uploads:/opt/app/uploads
@@ -18,11 +20,10 @@ services:
       interval: 3s
       timeout: 10s
       retries: 20
+    env_file:
+      - .env.local
     environment:
       - JAVA_OPTS=-Dspring.profiles.active=local
-      - LOG_FILE_PATH=/opt/app/logs
-      - SPRING_CLOUD_CONFIG_URI=http://host.docker.internal:9090
-      - SPRING_APPLICATION_NAME=manadoksli-svc
     networks:
       - manadoksli-network
 
